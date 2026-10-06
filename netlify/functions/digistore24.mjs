@@ -28,9 +28,8 @@ export default async (request) => {
       return new Response("Pinterest token missing", { status: 500 });
     }
 
-    const userAgent = request.headers.get("user-agent") || "";
-    const forwardedFor = request.headers.get("x-forwarded-for") || "";
-    const clientIp = forwardedFor.split(",")[0].trim();
+    // Test mode unless PINTEREST_LIVE is set to "true" in Netlify
+    const isLive = Netlify.env.get("PINTEREST_LIVE") === "true";
 
     const event = {
       data: [
@@ -39,23 +38,13 @@ export default async (request) => {
           action_source: "web",
           event_time: Math.floor(Date.now() / 1000),
           event_id: transactionId,
-
-          event_source_url:
-            `https://bestgoldenrose.netlify.app/?epik=${encodeURIComponent(clickId)}`,
-
+          event_source_url: "https://bestgoldenrose.netlify.app/",
           user_data: {
             click_id: clickId,
-            ...(clientIp && userAgent
-              ? {
-                  client_ip_address: clientIp,
-                  client_user_agent: userAgent,
-                }
-              : {}),
           },
-
           custom_data: {
             currency: currency || "USD",
-            value: amount,
+            value: String(amount || affiliateAmount || "0"),
             order_id: transactionId,
             content_ids: productId ? [productId] : [],
           },
@@ -63,24 +52,29 @@ export default async (request) => {
       ],
     };
 
-    const pinterestResponse = await fetch(
-      "https://api.pinterest.com/v5/ad_accounts/549770841236/events",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(event),
-      }
-    );
+    try {
+      const pinterestResponse = await fetch(
+        "https://api.pinterest.com/v5/ad_accounts/549770841236/events" +
+          (isLive ? "" : "?test=true"),
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(event),
+        }
+      );
 
-    const pinterestResult = await pinterestResponse.text();
-
-    console.log("Pinterest response:", {
-      status: pinterestResponse.status,
-      body: pinterestResult,
-    });
+      const pinterestResult = await pinterestResponse.text();
+      console.log("Pinterest response:", {
+        live: isLive,
+        status: pinterestResponse.status,
+        body: pinterestResult,
+      });
+    } catch (e) {
+      console.error("Pinterest request failed:", e.message);
+    }
   }
 
   return new Response("OK", { status: 200 });
