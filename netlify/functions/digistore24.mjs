@@ -31,6 +31,10 @@ export default async (request) => {
     // Test mode unless PINTEREST_LIVE is set to "true" in Netlify
     const isLive = Netlify.env.get("PINTEREST_LIVE") === "true";
 
+    const userAgent = request.headers.get("user-agent") || "";
+    const forwardedFor = request.headers.get("x-forwarded-for") || "";
+    const clientIp = forwardedFor.split(",")[0].trim();
+
     const event = {
       data: [
         {
@@ -41,6 +45,12 @@ export default async (request) => {
           event_source_url: "https://bestgoldenrose.netlify.app/",
           user_data: {
             click_id: clickId,
+            ...(clientIp && userAgent
+              ? {
+                  client_ip_address: clientIp,
+                  client_user_agent: userAgent,
+                }
+              : {}),
           },
           custom_data: {
             currency: currency || "USD",
