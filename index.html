@@ -404,5 +404,24 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.body.appendChild(d);
 });
 </script>
+  <!-- TEST ONLY: delete after testing -->
+<form name="epik-log" data-netlify="true" hidden>
+  <input name="epik"><input name="cookie_epik"><input name="query">
+</form>
+<script>
+(function(){
+  try{
+    if(sessionStorage.getItem('epikLogged'))return;
+    const q=location.search;
+    const p=new URLSearchParams(q).get('epik')||'';
+    const c=(document.cookie.match(/(?:^|;\s*)_epik=([^;]+)/)||[])[1]||'';
+    if(!q&&!c)return;
+    sessionStorage.setItem('epikLogged','1');
+    fetch('/',{method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:new URLSearchParams({'form-name':'epik-log',epik:p,cookie_epik:c,query:q}).toString()});
+  }catch(e){}
+})();
+</script>
 </body>
 </html>
