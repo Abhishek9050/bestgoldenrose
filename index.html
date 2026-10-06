@@ -394,5 +394,15 @@ pintrk('page');
   });
 })();
 </script>
+  <script>
+document.addEventListener('DOMContentLoaded',()=>{
+  const p=new URLSearchParams(location.search).get('epik');
+  const c=document.cookie.match(/(?:^|;\s*)_epik=([^;]+)/)?.[1];
+  const d=document.createElement('div');
+  d.style='position:fixed;bottom:0;left:0;right:0;background:#000;color:#0f0;font:12px monospace;padding:6px;z-index:99999;word-break:break-all';
+  d.textContent='URL epik: '+(p||'none')+' | cookie _epik: '+(c||'none');
+  document.body.appendChild(d);
+});
+</script>
 </body>
 </html>
